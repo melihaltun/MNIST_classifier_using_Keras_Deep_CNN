@@ -22,7 +22,7 @@ import os
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 print('Num GPUs Available: ', len(physical_devices))
 # uncomment the next line for GPU parrellization
-#tf.config.experimental.set_memory_growth(physical_devices[0], True) # no available GPUs
+#tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
