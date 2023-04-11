@@ -1,3 +1,8 @@
+#
+# @file digitReoognition.py
+# @author Melih Altun @2023
+#
+
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -8,7 +13,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import categorical_crossentropy
 from keras.utils import to_categorical
 from keras.layers import LeakyReLU
-
+from keras.callbacks import ModelCheckpoint
 
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
@@ -21,8 +26,8 @@ import os
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 print('Num GPUs Available: ', len(physical_devices))
-# uncomment the next line for GPU parrellization
-#tf.config.experimental.set_memory_growth(physical_devices[0], True)
+if len(physical_devices) > 0:    # comment or set to false if GPU parrellization is not needed
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
@@ -44,6 +49,7 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
 
+# train test validation split
 def splitData(dataArray, pctTrain, pctVal):
     N = dataArray.shape[0]
     pctTrain /= 100
@@ -77,9 +83,11 @@ def preProcessData(data, mean_all=0):
     data = data - mean_all
     return data, mean_all
 
+
 def reshapeData(data, sz1, sz2):
     data = data.reshape(-1, sz1, sz2, 1)
     return data
+
 
 if os.path.isdir('./digits_data/train_test_val') is False:
     dataAll = pd.read_csv('./digits_data/train.csv')
@@ -130,6 +138,7 @@ trainDataset = trainDataset.batch(batch_sz).prefetch(tf.data.AUTOTUNE)
 valDataset = tf.data.Dataset.from_tensor_slices((val_x, val_y))
 valDataset = valDataset.batch(batch_sz).prefetch(tf.data.AUTOTUNE)
 
+#define model
 if useLeakyRelu:
     model = Sequential([Conv2D(filters=8, kernel_size=(9, 9), padding='same', input_shape=(28, 28, 1)), LeakyReLU(alpha=0.1),
         MaxPool2D(pool_size=(2, 2), strides=1),
@@ -166,10 +175,21 @@ else:
 # b=32, e=24 - leaky relu - f#8 9x9, mx s1, f#16 7x7, mx s1,  f#32 5x5, mx s2,  f#64 3x3, mx s2, flt, d32, d48, d16, d10 -> Tr .9964 Val .9845 Ts .9899
 model.summary()
 
+checkpoint_filepath = './models/digitRec_model_checkpoint.h5'
+os.makedirs('./models', exist_ok=True)
+# callback function to save model after each epoch
+model_checkpoint_callback = ModelCheckpoint(
+    filepath=checkpoint_filepath,
+    save_weights_only=False,
+    monitor='val_loss',
+    mode='min',
+    save_best_only=True)
+
 model.compile(optimizer=Adam(learning_rate=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
 
-model.fit(x=trainDataset, validation_data=valDataset, epochs=24) #, verbose=2)
+model.fit(x=trainDataset, validation_data=valDataset, epochs=24, callbacks=[model_checkpoint_callback])
 
+#apply fitted model to test data
 predictions = model.predict(x=test_x, verbose=0)
 rounded_predictions = np.argmax(predictions, axis=-1)
 
@@ -179,3 +199,5 @@ plot_confusion_matrix(cm=cm, classes=cm_plot_labels, title='Confusion Matrix')
 
 print("Test Accuracy = ")
 print(np.sum(testLabels == rounded_predictions.reshape(len(rounded_predictions), 1))/len(testLabels))
+
+dummy = 1
