@@ -12,3 +12,6 @@ Split ratio is set to 90% training, 6% validation and 4% testing. It can be modi
 If a new train, validation & test set is needed, delete the "/train_test_val/" folder under "./digits_data/"
 
 GPU parallelization is turned off, but it can be turned on by uncommenting the relevant line. 
+
+![image](https://user-images.githubusercontent.com/40482921/231029172-6d924ac9-3342-463e-a778-15310f1c0a9d.png)
+
