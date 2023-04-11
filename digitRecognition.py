@@ -199,5 +199,3 @@ plot_confusion_matrix(cm=cm, classes=cm_plot_labels, title='Confusion Matrix')
 
 print("Test Accuracy = ")
 print(np.sum(testLabels == rounded_predictions.reshape(len(rounded_predictions), 1))/len(testLabels))
-
-dummy = 1
